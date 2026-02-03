@@ -228,6 +228,25 @@ btn("π", 7, 1, insert_pi)
 btn("(", 7, 2, lambda: press("("))
 btn(")", 7, 3, lambda: press(")"))
 
+
+
+# =====================
+# Scientific functions
+# =====================
+
+btn("sin", 8, 0, lambda: press("sin("))
+btn("cos", 8, 1, lambda: press("cos("))
+btn("tan", 8, 2, lambda: press("tan("))
+btn("log", 8, 3, lambda: press("log("))
+
+btn("asin", 9, 0, lambda: press("asin("))
+btn("acos", 9, 1, lambda: press("acos("))
+btn("atan", 9, 2, lambda: press("atan("))
+btn("Ans", 9, 3, engine.insert_ans)
+
+# ======== ADDED (Power button) ========
+btn("xʸ", 6, 3, power)
+# =====================================
    
     
 
