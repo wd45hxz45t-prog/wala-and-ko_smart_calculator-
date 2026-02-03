@@ -180,6 +180,37 @@ def btn(text, r, c, cmd):
         height=2,
         command=cmd
     ).grid(row=r, column=c, padx=4, pady=4)
+    
+    
+    
+ 
+# =====================
+# Top control buttons
+# =====================
+
+btn("AC", 2, 0, clear_all)
+btn("C", 2, 1, clear_entry)
+btn("DEL", 2, 2, delete_last)
+btn("÷", 2, 3, lambda: press("÷"))
+
+
+
+# =====================
+# Numbers and basic operations
+# =====================
+
+buttons = [
+    ("7",3,0), ("8",3,1), ("9",3,2), ("×",3,3),
+    ("4",4,0), ("5",4,1), ("6",4,2), ("-",4,3),
+    ("1",5,0), ("2",5,1), ("3",5,2), ("+",5,3),
+]
+
+for text, r, c in buttons:
+    btn(text, r, c, lambda x=text: press(x))
+
+   
+    
+
 
 
 
