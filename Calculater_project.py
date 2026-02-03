@@ -107,4 +107,79 @@ class CalculatorEngine:
 
     def insert_ans(self):
         self.display.insert(tk.END, self.last_answer)
+        
+
+
+# =====================
+# Input handling functions
+# =====================
+
+# Inserts the pressed button value into the display screen
+def press(value):
+    display.insert(tk.END, value)
+
+# Clears the entire display screen
+def clear_all():
+    display.delete(0, tk.END)
+
+# Clears the current entry (same as AC for simplicity)
+def clear_entry():
+    display.delete(0, tk.END)
+
+# Deletes the last entered character from the display
+def delete_last():
+    text = display.get()
+    display.delete(0, tk.END)
+    display.insert(0, text[:-1])
+
+# Inserts the value of pi (π) into the display
+def insert_pi():
+    display.insert(tk.END, str(math.pi))
+
+# ======== ADDED (Power function) ========
+# Inserts the power symbol (^) into the display for exponent calculations
+def power():
+    display.insert(tk.END, "^")
+# =======================================
+
+
+
+# =====================
+# GUI window setup
+# =====================
+
+# Create the main calculator window
+root = tk.Tk()
+root.title("Scientific Calculator")
+root.geometry("380x720")
+root.resizable(False, False)
+
+# Entry widget used as the calculator display screen
+display = tk.Entry(
+    root,
+    font=("Arial", 24),
+    justify="right",
+    bd=10
+)
+display.grid(row=1, column=0, columnspan=4, padx=10, pady=10)
+
+engine = CalculatorEngine(display)
+
+
+# =====================
+# Button creation helper
+# =====================
+
+# Creates and places a button on the calculator grid
+def btn(text, r, c, cmd):
+    tk.Button(
+        root,
+        text=text,
+        font=("Arial", 14),
+        width=6,
+        height=2,
+        command=cmd
+    ).grid(row=r, column=c, padx=4, pady=4)
+
+
 
