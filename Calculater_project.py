@@ -208,6 +208,26 @@ buttons = [
 for text, r, c in buttons:
     btn(text, r, c, lambda x=text: press(x))
 
+
+# =====================
+# Bottom row (zero, decimal, comma, equals)
+# =====================
+
+btn("0", 6, 0, lambda: press("0"))
+btn(".", 6, 1, lambda: press("."))
+btn(",", 6, 2, lambda: press(","))
+btn("=", 10, 3, engine.calculate)
+
+
+# =====================
+# Roots, constants, and brackets
+# =====================
+
+btn("√", 7, 0, lambda: press("√"))
+btn("π", 7, 1, insert_pi)
+btn("(", 7, 2, lambda: press("("))
+btn(")", 7, 3, lambda: press(")"))
+
    
     
 
