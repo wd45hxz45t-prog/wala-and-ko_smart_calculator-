@@ -247,6 +247,16 @@ btn("Ans", 9, 3, engine.insert_ans)
 # ======== ADDED (Power button) ========
 btn("xʸ", 6, 3, power)
 # =====================================
+
+
+
+
+# =====================
+# Run the application
+# =====================
+
+# Starts the calculator and waits for user interaction
+root.mainloop()
    
     
 
