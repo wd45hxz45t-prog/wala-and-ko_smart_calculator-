@@ -118,13 +118,24 @@ class CalculatorEngine:
 def press(value):
     display.insert(tk.END, value)
 
-# Clears the entire display screen
+# Clears the entire display screen and reset last answer(AC button) :
 def clear_all():
     display.delete(0, tk.END)
-
-# Clears the current entry (same as AC for simplicity)
+    engine.last_answer= ""
+    
+    
+# Clears the last entry (number or function) (C button): 
 def clear_entry():
-    display.delete(0, tk.END)
+    text = display.get()
+    
+    # Remove last function if exists (sin( , cos( , etc.)
+    for func in ["asin(", "acos(", "atan(", "sin(", "cos(", "tan(", "log("]:
+        if text.endswith(func):
+            display.delete(len(text)-len(func), tk.END)
+            return
+    
+    # Otherwise remove last character
+    display.delete(len(text)-1, tk.END)
 
 # Deletes the last entered character from the display
 def delete_last():
@@ -151,7 +162,7 @@ def power():
 # Create the main calculator window
 root = tk.Tk()
 root.title("Scientific Calculator")
-root.geometry("380x720")
+root.geometry("380x625")
 root.resizable(False, False)
 
 # Entry widget used as the calculator display screen
