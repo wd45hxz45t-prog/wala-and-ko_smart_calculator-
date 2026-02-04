@@ -178,31 +178,79 @@ engine = CalculatorEngine(display)
 
 
 # =====================
-# Button creation helper
+# Button color definitions
 # =====================
 
-# Creates and places a button on the calculator grid
-def btn(text, r, c, cmd):
-    tk.Button(
+NUMBER_COLOR = "#ff8fcf"   # Pink color for number buttons
+OP_COLOR = "#4da6ff"       # Blue color for operator buttons
+EQUAL_COLOR = "#1e90ff"    # Darker blue for '=' button
+TEXT_COLOR = "white"       # Text color for all buttons
+
+
+# =====================
+# Button creation helper (Styled buttons with hover effect)
+# =====================
+
+# Creates a styled calculator button with custom colors,
+# optional column span, and hover (mouse-over) shadow effect
+def btn(text, r, c, cmd, bg, fg, colspan=1):
+
+    # Create the button widget
+    button = tk.Button(
         root,
-        text=text,
-        font=("Arial", 14),
-        width=6,
-        height=2,
-        command=cmd
-    ).grid(row=r, column=c, padx=4, pady=4)
-    
-    
-    
+        text=text,                     # Text displayed on the button
+        font=("Arial", 14, "bold"),    # Font style for better visibility
+        width=6,                       # Button width
+        height=2,                      # Button height
+        highlightbackground=bg,                        # Background color (numbers / operators)
+       
+                
+        activebackground=bg,           # Keep same color when pressed
+        relief="flat",                 # Flat style for modern look
+        borderwidth=0,                 # Remove default border
+        command=cmd                    # Function executed when button is clicked
+    )
+
+    # =====================
+    # Hover effect (mouse-over shadow effect)
+    # =====================
+
+    # Mouse enters button → add shadow
+    def on_enter(event):
+        button.config(relief="raised")
+
+    # Mouse leaves button → remove shadow
+    def on_leave(event):
+        button.config(relief="flat")
+
+    # Bind hover events
+    button.bind("<Enter>", on_enter)
+    button.bind("<Leave>", on_leave)
+
+    # =====================
+    # Button placement on the grid
+    # =====================
+
+    button.grid(
+        row=r,
+        column=c,
+        columnspan=colspan,
+        padx=6,
+        pady=6,
+        sticky="nsew"
+    )
+
+    return button
+
  
 # =====================
 # Top control buttons
 # =====================
 
-btn("AC", 2, 0, clear_all)
-btn("C", 2, 1, clear_entry)
-btn("DEL", 2, 2, delete_last)
-btn("÷", 2, 3, lambda: press("÷"))
+btn("AC", 2, 0, clear_all, OP_COLOR, TEXT_COLOR)
+btn("C", 2, 1, clear_entry, OP_COLOR, TEXT_COLOR)
+btn("DEL", 2, 2, delete_last, OP_COLOR, TEXT_COLOR)
+btn("÷", 2, 3, lambda: press("÷"), OP_COLOR, TEXT_COLOR)
 
 
 
@@ -217,46 +265,49 @@ buttons = [
 ]
 
 for text, r, c in buttons:
-    btn(text, r, c, lambda x=text: press(x))
+    if text.isdigit() or text == ".":
+        btn(text, r, c, lambda x=text: press(x), NUMBER_COLOR, TEXT_COLOR)
+    else:
+        btn(text, r, c, lambda x=text: press(x), OP_COLOR, TEXT_COLOR)
 
 
 # =====================
 # Bottom row (zero, decimal, comma, equals)
 # =====================
 
-btn("0", 6, 0, lambda: press("0"))
-btn(".", 6, 1, lambda: press("."))
-btn(",", 6, 2, lambda: press(","))
-btn("=", 10, 3, engine.calculate)
+btn("0", 6, 0, lambda: press("0"), NUMBER_COLOR, TEXT_COLOR)
+btn(".", 6, 1, lambda: press("."), NUMBER_COLOR, TEXT_COLOR)
+btn(",", 6, 2, lambda: press(","), OP_COLOR, TEXT_COLOR)
+btn("=", 10, 0, engine.calculate, EQUAL_COLOR, TEXT_COLOR, colspan=4)
 
 
 # =====================
 # Roots, constants, and brackets
 # =====================
 
-btn("√", 7, 0, lambda: press("√"))
-btn("π", 7, 1, insert_pi)
-btn("(", 7, 2, lambda: press("("))
-btn(")", 7, 3, lambda: press(")"))
+btn("√", 7, 0, lambda: press("√"), OP_COLOR, TEXT_COLOR)
+btn("π", 7, 1, insert_pi, OP_COLOR, TEXT_COLOR)
+btn("(", 7, 2, lambda: press("("), OP_COLOR, TEXT_COLOR)
+btn(")", 7, 3, lambda: press(")"), OP_COLOR, TEXT_COLOR)
+
 
 
 
 # =====================
 # Scientific functions
 # =====================
+btn("sin", 8, 0, lambda: press("sin("), OP_COLOR, TEXT_COLOR)
+btn("cos", 8, 1, lambda: press("cos("), OP_COLOR, TEXT_COLOR)
+btn("tan", 8, 2, lambda: press("tan("), OP_COLOR, TEXT_COLOR)
+btn("log", 8, 3, lambda: press("log("), OP_COLOR, TEXT_COLOR)
 
-btn("sin", 8, 0, lambda: press("sin("))
-btn("cos", 8, 1, lambda: press("cos("))
-btn("tan", 8, 2, lambda: press("tan("))
-btn("log", 8, 3, lambda: press("log("))
-
-btn("asin", 9, 0, lambda: press("asin("))
-btn("acos", 9, 1, lambda: press("acos("))
-btn("atan", 9, 2, lambda: press("atan("))
-btn("Ans", 9, 3, engine.insert_ans)
+btn("asin", 9, 0, lambda: press("asin("), OP_COLOR, TEXT_COLOR)
+btn("acos", 9, 1, lambda: press("acos("), OP_COLOR, TEXT_COLOR)
+btn("atan", 9, 2, lambda: press("atan("), OP_COLOR, TEXT_COLOR)
+btn("Ans", 9, 3, engine.insert_ans, OP_COLOR, TEXT_COLOR)
 
 # ======== ADDED (Power button) ========
-btn("xʸ", 6, 3, power)
+btn("xʸ", 6, 3, power, OP_COLOR, TEXT_COLOR)
 # =====================================
 
 
