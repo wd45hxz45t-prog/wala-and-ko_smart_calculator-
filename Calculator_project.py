@@ -322,172 +322,531 @@ class CalculatorEngine:
         # If last_answer is empty, nothing visible happens (empty string inserted)
         self.display.insert(tk.END, self.last_answer)
 
-
 # =====================
-# GUI window setup
-# =====================
-
-# Create the main calculator window
-root = tk.Tk()
-root.title("Scientific Calculator")
-root.geometry("380x625")
-
-#Disable window resizing to keep the calcilater layout fixed : 
-root.resizable(False, False)
-
-# Entry widget used as the calculator display screen
-display = tk.Entry(
-    root,
-    font=("Arial", 24),
-    justify="right",
-    bd=10
-)
-display.grid(row=1, column=0, columnspan=4, padx=10, pady=10)
-
-engine = CalculatorEngine(display)
-
-
-# =====================
-# Button color definitions
+# GUI Class
 # =====================
 
-NUMBER_COLOR = "#ff8fcf"   # Pink color for number buttons
-OP_COLOR = "#4da6ff"       # Blue color for operator buttons
-EQUAL_COLOR = "#1e90ff"    # Darker blue for '=' button
-TEXT_COLOR = "white"       # Text color for all buttons
-
-
-# =====================
-# Button creation helper (Styled buttons with hover effect)
-# =====================
-
-# Creates a styled calculator button with custom colors,
-# optional column span, and hover (mouse-over) shadow effect
-def btn(text, r, c, cmd, bg, fg, colspan=1):
-
-    # Create the button widget
-    button = tk.Button(
-        root,
-        text=text,                     # Text displayed on the button
-        font=("Arial", 14, "bold"),    # Font style for better visibility
-        width=6,                       # Button width
-        height=2,                      # Button height
-        highlightbackground=bg,        # Background color (numbers / operators)
-       
-                
-        activebackground=bg,           # Keep same color when pressed
-        relief="flat",                 # Flat style for modern look
-        borderwidth=0,                 # Remove default border
-        command=cmd                    # Function executed when button is clicked
-    )
-
+class CalculatorGUI:
+    """
+    Graphical User Interface Class - Handles all tkinter-related components
+    This class is responsible for creating and managing the calculator's visual interface,
+    including the window, display screen, buttons, colors, and user interactions.
+    """
+    
+    def __init__(self):
+        """
+        Initialize the Calculator GUI
+        This method sets up all the essential components of the calculator interface:
+        1. Define color scheme for buttons
+        2. Create the main window
+        3. Create the display screen
+        4. Initialize the calculation engine
+        5. Create all calculator buttons
+        """
+        
+        # =====================
+        # Button color definitions
+        # =====================
+        
+        self.NUMBER_COLOR = "#ff8fcf"   # Pink color for number buttons (0-9 and decimal point)
+        self.OP_COLOR = "#4da6ff"       # Blue color for operator buttons (+, -, ×, ÷, functions)
+        self.EQUAL_COLOR = "#1e90ff"    # Darker blue color specifically for the '=' button
+        self.TEXT_COLOR = "white"       # White text color for all button labels
+        
+        # =====================
+        # Initialize GUI components in sequence
+        # =====================
+        
+        # Step 1: Create and configure the main calculator window
+        self.setup_window()
+        
+        # Step 2: Create the display screen where expressions and results appear
+        self.create_display()
+        
+        # Step 3: Initialize the calculation engine and connect it to the display
+        self.engine = CalculatorEngine(self.display)
+        
+        # Step 4: Create all calculator buttons (numbers, operators, functions)
+        self.create_buttons()
+    
+    
     # =====================
-    # Hover effect (mouse-over shadow effect)
+    # Window setup method
     # =====================
-
-    # Mouse enters button → add shadow
-    def on_enter(event):
-        button.config(relief="raised")
-
-    # Mouse leaves button → remove shadow
-    def on_leave(event):
-        button.config(relief="flat")
-
-    # Bind hover events
-    button.bind("<Enter>", on_enter)
-    button.bind("<Leave>", on_leave)
-
+    
+    def setup_window(self):
+        """
+        Create and configure the main calculator window
+        
+        This method initializes the root tkinter window with specific properties:
+        - Sets the window title to "Scientific Calculator"
+        - Defines fixed dimensions (380x625 pixels) for consistent layout
+        - Disables window resizing to maintain button alignment and spacing
+        """
+        
+        # Create the main tkinter window object
+        self.root = tk.Tk()
+        
+        # Set the title that appears in the window's title bar
+        self.root.title("Scientific Calculator")
+        
+        # Set fixed window dimensions: 380 pixels wide × 625 pixels tall
+        # These dimensions are optimized for all buttons to fit properly
+        self.root.geometry("380x625")
+        
+        # Disable window resizing to keep the calculator layout fixed
+        # This prevents buttons from becoming misaligned if user tries to resize
+        self.root.resizable(False, False)
+    
+    
     # =====================
-    # Button placement on the grid
+    # Display creation method
     # =====================
-
-    button.grid(
-        row=r,
-        column=c,
-        columnspan=colspan,
-        padx=6,
-        pady=6,
-        sticky="nsew"
-    )
-
-    return button
-
- 
-# =====================
-# Top control buttons
-# =====================
-
-btn("AC", 2, 0, clear_all, OP_COLOR, TEXT_COLOR)
-btn("C", 2, 1, clear_entry, OP_COLOR, TEXT_COLOR)
-btn("DEL", 2, 2, delete_last, OP_COLOR, TEXT_COLOR)
-btn("÷", 2, 3, lambda: press("÷"), OP_COLOR, TEXT_COLOR)
-
-
-
-# =====================
-# Numbers and basic operations
-# =====================
-
-buttons = [
-    ("7",3,0), ("8",3,1), ("9",3,2), ("×",3,3),
-    ("4",4,0), ("5",4,1), ("6",4,2), ("-",4,3),
-    ("1",5,0), ("2",5,1), ("3",5,2), ("+",5,3),
-]
-
-for text, r, c in buttons:
-    if text.isdigit() or text == ".":
-        btn(text, r, c, lambda x=text: press(x), NUMBER_COLOR, TEXT_COLOR)
-    else:
-        btn(text, r, c, lambda x=text: press(x), OP_COLOR, TEXT_COLOR)
-
-
-# =====================
-# Bottom row (zero, decimal, comma, equals)
-# =====================
-
-btn("0", 6, 0, lambda: press("0"), NUMBER_COLOR, TEXT_COLOR)
-btn(".", 6, 1, lambda: press("."), NUMBER_COLOR, TEXT_COLOR)
-btn(",", 6, 2, lambda: press(","), OP_COLOR, TEXT_COLOR)
-btn("=", 10, 0, engine.calculate, EQUAL_COLOR, TEXT_COLOR, colspan=4)
-
-
-# =====================
-# Roots, constants, and brackets
-# =====================
-
-btn("√", 7, 0, lambda: press("√"), OP_COLOR, TEXT_COLOR)
-btn("π", 7, 1, insert_pi, OP_COLOR, TEXT_COLOR)
-btn("(", 7, 2, lambda: press("("), OP_COLOR, TEXT_COLOR)
-btn(")", 7, 3, lambda: press(")"), OP_COLOR, TEXT_COLOR)
-
-
-
-
-# =====================
-# Scientific functions
-# =====================
-btn("sin", 8, 0, lambda: press("sin("), OP_COLOR, TEXT_COLOR)
-btn("cos", 8, 1, lambda: press("cos("), OP_COLOR, TEXT_COLOR)
-btn("tan", 8, 2, lambda: press("tan("), OP_COLOR, TEXT_COLOR)
-btn("log", 8, 3, lambda: press("log("), OP_COLOR, TEXT_COLOR)
-
-btn("asin", 9, 0, lambda: press("asin("), OP_COLOR, TEXT_COLOR)
-btn("acos", 9, 1, lambda: press("acos("), OP_COLOR, TEXT_COLOR)
-btn("atan", 9, 2, lambda: press("atan("), OP_COLOR, TEXT_COLOR)
-btn("Ans", 9, 3, engine.insert_ans, OP_COLOR, TEXT_COLOR)
-
-# ======== ADDED (Power button) ========
-btn("xʸ", 6, 3, power, OP_COLOR, TEXT_COLOR)
-# =====================================
-
-
+    
+    def create_display(self):
+        """
+        Create the calculator's display screen (Entry widget)
+        
+        The display screen shows:
+        - Mathematical expressions as the user types them
+        - Final calculation results after pressing '='
+        - Error messages if invalid expressions are entered
+        
+        Properties:
+        - Large font (Arial, 24pt) for easy readability
+        - Right-aligned text (like traditional calculators)
+        - Positioned at the top of the calculator spanning all 4 columns
+        """
+        
+        # Create an Entry widget to serve as the calculator's display screen
+        self.display = tk.Entry(
+            self.root,                  # Parent widget (main window)
+            font=("Arial", 24),         # Large font for better visibility
+            justify="right",            # Right-align text (standard calculator behavior)
+            bd=10                       # Border width of 10 pixels for visual separation
+        )
+        
+        # Position the display screen in the grid layout:
+        # - Row 1 (leaving row 0 empty for potential future use)
+        # - Column 0, spanning across all 4 columns
+        # - Padding: 10 pixels on all sides
+        self.display.grid(row=1, column=0, columnspan=4, padx=10, pady=10)
+    
+    
+    # =====================
+    # Button creation helper method (with hover effect)
+    # =====================
+    
+    def create_button(self, text, r, c, cmd, bg, colspan=1):
+        """
+        Create a styled calculator button with hover effect
+        
+        This method creates individual buttons for the calculator with:
+        - Custom colors based on button type (number/operator)
+        - Hover effect (shadow appears when mouse enters button area)
+        - Consistent size and styling across all buttons
+        - Grid-based positioning for organized layout
+        
+        Parameters:
+        -----------
+        text : str
+            The label displayed on the button (e.g., "7", "+", "sin")
+        r : int
+            Row position in the grid layout
+        c : int
+            Column position in the grid layout
+        cmd : function
+            Function to execute when button is clicked
+        bg : str
+            Background color in hex format (e.g., "#ff8fcf")
+        colspan : int, optional
+            Number of columns the button should span (default: 1)
+            Used for buttons like '=' which spans 4 columns
+        
+        Returns:
+        --------
+        button : tk.Button
+            The created button object
+        """
+        
+        # =====================
+        # Create the button widget
+        # =====================
+        
+        button = tk.Button(
+            self.root,                     # Parent widget (main window)
+            text=text,                     # Text label displayed on the button
+            font=("Arial", 14, "bold"),    # Font: Arial, size 14, bold for clarity
+            width=6,                       # Button width (in character units)
+            height=2,                      # Button height (in character units)
+            highlightbackground=bg,        # Background color (differs for numbers vs operators)
+            activebackground=bg,           # Keep same color when button is pressed
+            relief="flat",                 # Flat appearance (modern, minimalist style)
+            borderwidth=0,                 # Remove default border for cleaner look
+            command=cmd                    # Function to execute when clicked
+        )
+        
+        # =====================
+        # Hover effect implementation
+        # =====================
+        # These functions create a visual feedback when mouse hovers over button
+        # This improves user experience by showing which button will be pressed
+        
+        def on_enter(event):
+            """
+            Mouse enters button area → add raised shadow effect
+            This gives visual feedback that the button is interactive
+            """
+            button.config(relief="raised")
+        
+        def on_leave(event):
+            """
+            Mouse leaves button area → remove shadow (return to flat)
+            Button returns to its normal flat appearance
+            """
+            button.config(relief="flat")
+        
+        # Bind the hover functions to mouse events:
+        # <Enter> event triggers when mouse cursor enters button area
+        # <Leave> event triggers when mouse cursor exits button area
+        button.bind("<Enter>", on_enter)
+        button.bind("<Leave>", on_leave)
+        
+        # =====================
+        # Position button in the grid layout
+        # =====================
+        
+        button.grid(
+            row=r,              # Row position in grid
+            column=c,           # Column position in grid
+            columnspan=colspan, # Number of columns to span (1 for most buttons, 4 for '=')
+            padx=6,             # Horizontal padding (6 pixels space between buttons)
+            pady=6,             # Vertical padding (6 pixels space between buttons)
+            sticky="nsew"       # Stretch button to fill entire grid cell (north-south-east-west)
+        )
+        
+        return button
+    
+    
+    # =====================
+    # Input handling methods
+    # =====================
+    
+    def press(self, value):
+        """
+        Insert a value into the display screen
+        
+        This method is called when user clicks number or operator buttons.
+        It appends the clicked value to the end of the current expression.
+        
+        Parameters:
+        -----------
+        value : str
+            The character to insert (number, operator, or function name)
+        
+        Example:
+        --------
+        If display shows "5+3" and user clicks "2", display becomes "5+32"
+        """
+        self.display.insert(tk.END, value)
+    
+    
+    def clear_all(self):
+        """
+        Clear the entire display screen and reset last answer (AC button)
+        
+        AC stands for "All Clear" - it performs a complete reset:
+        - Deletes all text from the display screen
+        - Resets the last_answer variable in the calculation engine
+        
+        This is typically used when starting a completely new calculation
+        or when user wants to clear everything and start fresh.
+        """
+        # Delete all characters from the display (from position 0 to END)
+        self.display.delete(0, tk.END)
+        
+        # Reset the last answer stored in the engine (used by Ans button)
+        self.engine.last_answer = ""
+    
+    
+    def clear_entry(self):
+        """
+        Clear the last entry (number or function) - C button
+        
+        This is a "smart delete" that removes:
+        - Complete function names (sin(, cos(, log(, etc.) as one unit
+        - OR the last single character if not a function
+        
+        This is more user-friendly than deleting character by character
+        when dealing with mathematical functions.
+        
+        Example:
+        --------
+        Display: "5+sin("
+        After C button: "5+"  (removes entire "sin(" not just the "(")
+        """
+        # Get current text from display
+        text = self.display.get()
+        
+        # Check if the text ends with any known function name
+        # If found, remove the entire function as one unit
+        for func in ["asin(", "acos(", "atan(", "sin(", "cos(", "tan(", "log("]:
+            if text.endswith(func):
+                # Delete from (text length - function length) to END
+                # This removes the complete function name
+                self.display.delete(len(text)-len(func), tk.END)
+                return  # Exit after removing function
+        
+        # If no function found and text exists, remove just the last character
+        if text:
+            self.display.delete(len(text)-1, tk.END)
+    
+    
+    def delete_last(self):
+        """
+        Delete the last entered character from the display (DEL button)
+        
+        This method removes only the last single character, regardless of
+        whether it's part of a number, operator, or function name.
+        
+        Implementation:
+        - Get current text
+        - Delete everything from display
+        - Re-insert text without the last character
+        
+        Example:
+        --------
+        Display: "sin(45)"
+        After DEL: "sin(4"
+        """
+        # Get the current text from display
+        text = self.display.get()
+        
+        # Clear the entire display
+        self.display.delete(0, tk.END)
+        
+        # Re-insert the text without the last character (text[:-1] means all except last)
+        self.display.insert(0, text[:-1])
+    
+    
+    def insert_pi(self):
+        """
+        Insert the mathematical constant π (pi) into the display
+        
+        When the π button is pressed, this method inserts the numerical
+        value of pi (approximately 3.14159265359) into the expression.
+        
+        The value is obtained from Python's math.pi constant which provides
+        high precision (typically 15-17 decimal places).
+        
+        Example:
+        --------
+        User clicks: "2" → "×" → "π"
+        Display shows: "2×3.141592653589793"
+        """
+        # Insert the value of pi at the end of current expression
+        # math.pi provides the most accurate value available in Python
+        self.display.insert(tk.END, str(math.pi))
+    
+    
+    def power(self):
+        """
+        Insert the power/exponent operator (^) into the display
+        
+        This allows users to calculate exponents (powers).
+        The ^ symbol will later be converted to Python's ** operator
+        during calculation.
+        
+        Examples:
+        ---------
+        2^3 → calculates as 2**3 → result: 8
+        5^2 → calculates as 5**2 → result: 25
+        """
+        # Insert the ^ symbol which represents exponentiation
+        # This will be converted to ** during expression evaluation
+        self.display.insert(tk.END, "^")
+    
+    
+    # =====================
+    # Button creation method (creates all calculator buttons)
+    # =====================
+    
+    def create_buttons(self):
+        """
+        Create all calculator buttons in organized rows
+        
+        This method systematically creates every button on the calculator
+        in a logical order, organizing them by function:
+        
+        1. Control buttons (AC, C, DEL, ÷)
+        2. Number pad (7-9, 4-6, 1-3, 0)
+        3. Basic operators (×, -, +)
+        4. Special buttons (decimal point, comma, power)
+        5. Scientific functions (√, π, parentheses)
+        6. Trigonometric functions (sin, cos, tan, and their inverses)
+        7. Logarithm and Ans buttons
+        8. Equals button
+        
+        Each button is color-coded:
+        - Pink (NUMBER_COLOR) for digits
+        - Blue (OP_COLOR) for operators and functions
+        - Dark blue (EQUAL_COLOR) for equals button
+        """
+        
+        # =====================
+        # Row 2: Top control buttons
+        # =====================
+        # These buttons control the display and basic division
+        
+        self.create_button("AC", 2, 0, self.clear_all, self.OP_COLOR)
+        # AC (All Clear): Clears entire display and resets last answer
+        
+        self.create_button("C", 2, 1, self.clear_entry, self.OP_COLOR)
+        # C (Clear Entry): Removes last entry (smart delete for functions)
+        
+        self.create_button("DEL", 2, 2, self.delete_last, self.OP_COLOR)
+        # DEL (Delete): Removes only the last single character
+        
+        self.create_button("÷", 2, 3, lambda: self.press("÷"), self.OP_COLOR)
+        # Division operator: ÷ symbol (will be converted to / during calculation)
+        
+        
+        # =====================
+        # Rows 3-5: Number pad and basic operators
+        # =====================
+        # Standard calculator layout: 7-8-9, 4-5-6, 1-2-3
+        # Each row includes its corresponding operator (×, -, +)
+        
+        # Define button layout as list of tuples: (text, row, column)
+        buttons = [
+            ("7",3,0), ("8",3,1), ("9",3,2), ("×",3,3),  # Row 3
+            ("4",4,0), ("5",4,1), ("6",4,2), ("-",4,3),  # Row 4
+            ("1",5,0), ("2",5,1), ("3",5,2), ("+",5,3),  # Row 5
+        ]
+        
+        # Loop through each button definition and create it
+        for text, r, c in buttons:
+            if text.isdigit():
+                # If button is a digit (0-9), use pink NUMBER_COLOR
+                self.create_button(text, r, c, lambda x=text: self.press(x), self.NUMBER_COLOR)
+            else:
+                # If button is an operator (×, -, +), use blue OP_COLOR
+                self.create_button(text, r, c, lambda x=text: self.press(x), self.OP_COLOR)
+        
+        
+        # =====================
+        # Row 6: Zero, decimal point, comma, and power
+        # =====================
+        
+        self.create_button("0", 6, 0, lambda: self.press("0"), self.NUMBER_COLOR)
+        # Zero button: Uses pink color like other numbers
+        
+        self.create_button(".", 6, 1, lambda: self.press("."), self.NUMBER_COLOR)
+        # Decimal point: Allows entry of decimal numbers (e.g., 3.14)
+        
+        self.create_button(",", 6, 2, lambda: self.press(","), self.OP_COLOR)
+        # Comma: Used in functions like √(3,27) for nth root
+        
+        self.create_button("xʸ", 6, 3, self.power, self.OP_COLOR)
+        # Power button: Inserts ^ symbol for exponentiation (x to the power of y)
+        
+        
+        # =====================
+        # Row 7: Roots, constants, and parentheses
+        # =====================
+        
+        self.create_button("√", 7, 0, lambda: self.press("√"), self.OP_COLOR)
+        # Square root symbol: Can be used as √25 or √(3,27) for nth root
+        
+        self.create_button("π", 7, 1, self.insert_pi, self.OP_COLOR)
+        # Pi constant: Inserts the value of π (approximately 3.14159...)
+        
+        self.create_button("(", 7, 2, lambda: self.press("("), self.OP_COLOR)
+        # Opening parenthesis: For grouping expressions and function arguments
+        
+        self.create_button(")", 7, 3, lambda: self.press(")"), self.OP_COLOR)
+        # Closing parenthesis: Completes grouped expressions
+        
+        
+        # =====================
+        # Row 8: Trigonometric functions and logarithm
+        # =====================
+        # All trigonometric functions work with degrees (not radians)
+        
+        self.create_button("sin", 8, 0, lambda: self.press("sin("), self.OP_COLOR)
+        # Sine function: Calculates sine of an angle in degrees
+        # Example: sin(30) → 0.5
+        
+        self.create_button("cos", 8, 1, lambda: self.press("cos("), self.OP_COLOR)
+        # Cosine function: Calculates cosine of an angle in degrees
+        # Example: cos(60) → 0.5
+        
+        self.create_button("tan", 8, 2, lambda: self.press("tan("), self.OP_COLOR)
+        # Tangent function: Calculates tangent of an angle in degrees
+        # Example: tan(45) → 1.0
+        
+        self.create_button("log", 8, 3, lambda: self.press("log("), self.OP_COLOR)
+        # Logarithm base 10: Calculates log₁₀(x)
+        # Example: log(100) → 2.0
+        
+        
+        # =====================
+        # Row 9: Inverse trigonometric functions and Ans button
+        # =====================
+        # Inverse trig functions return angles in degrees
+        
+        self.create_button("asin", 9, 0, lambda: self.press("asin("), self.OP_COLOR)
+        # Inverse sine (arcsin): Returns angle whose sine is the input
+        # Example: asin(0.5) → 30 degrees
+        
+        self.create_button("acos", 9, 1, lambda: self.press("acos("), self.OP_COLOR)
+        # Inverse cosine (arccos): Returns angle whose cosine is the input
+        # Example: acos(0.5) → 60 degrees
+        
+        self.create_button("atan", 9, 2, lambda: self.press("atan("), self.OP_COLOR)
+        # Inverse tangent (arctan): Returns angle whose tangent is the input
+        # Example: atan(1) → 45 degrees
+        
+        self.create_button("Ans", 9, 3, self.engine.insert_ans, self.OP_COLOR)
+        # Ans (Answer) button: Inserts the result of the last calculation
+        # Useful for chaining calculations without retyping results
+        
+        
+        # =====================
+        # Row 10: Equals button (spans all 4 columns)
+        # =====================
+        
+        self.create_button("=", 10, 0, self.engine.calculate, self.EQUAL_COLOR, colspan=4)
+        # Equals button: Triggers calculation of the expression
+        # - Spans across all 4 columns for easy access
+        # - Uses darker blue color (EQUAL_COLOR) to stand out
+        # - Calls engine.calculate() to evaluate the expression
+    
+    
+    # =====================
+    # Application run method
+    # =====================
+    
+    def run(self):
+        """
+        Start the calculator application
+        
+        This method starts the tkinter main event loop, which:
+        - Displays the calculator window
+        - Listens for user interactions (button clicks, keyboard input)
+        - Keeps the application running until user closes the window
+        
+        This is the final method called after all setup is complete.
+        The program will remain in this loop until the window is closed.
+        """
+        self.root.mainloop()
 
 # =====================
 # Run the application
 # =====================
-
 if __name__ == "__main__":
-    root.mainloop()
+    app = CalculatorGUI()
+    app.run()
 
 
 
