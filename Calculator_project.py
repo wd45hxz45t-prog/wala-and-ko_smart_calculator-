@@ -157,11 +157,8 @@ class CalculatorEngine:
             # √(25) → math.sqrt(25)   → 5.0
             # √9.5  → math.sqrt(9.5)  → 3.082...
             
-            expr = re.sub(
-                r'√\(?([0-9.]+)\)?',
-                r'math.sqrt(\1)',
-                expr
-            )
+            expr = re.sub(r'√\(([^)]+)\)', r'math.sqrt(\1)', expr)
+
             
             
             # =====================
