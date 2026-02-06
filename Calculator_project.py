@@ -10,182 +10,317 @@ import re
 
 
 # =====================
-# Calculation class
+# Calculation Engine Class
 # =====================
 
 class CalculatorEngine:
-
+    """
+    Calculator Engine Class - Handles all mathematical calculations
+    
+    This class is responsible for:
+    - Processing mathematical expressions entered by the user
+    - Converting calculator symbols into Python-compatible operators
+    - Handling advanced functions (roots, trigonometry, logarithms)
+    - Storing the last calculated result for the Ans button
+    - Displaying results or error messages on the screen
+    """
+    
     def __init__(self, display):
-        self.display = display
-        self.last_answer = ""
-
-
+        """
+        Initialize the Calculator Engine
+        
+        Parameters:
+        -----------
+        display : tk.Entry
+            Reference to the calculator's display screen widget
+            This allows the engine to read input and show results
+        
+        Attributes:
+        -----------
+        self.display : tk.Entry
+            The display screen where expressions and results appear
+        self.last_answer : str
+            Stores the most recent calculation result
+            Used by the "Ans" button to recall previous answers
+        """
+        self.display = display      # Reference to the display screen
+        self.last_answer = ""       # Initialize empty (no previous calculation yet)
+    
+    
     # =====================
-    # Calculation function
+    # Main calculation method
     # =====================
-
-    # Evaluates the mathematical expression entered by the user
+    
     def calculate(self):
+        """
+        Evaluate the mathematical expression entered by the user
+        
+        This method performs the complete calculation process:
+        1. Retrieves the expression from the display screen
+        2. Converts calculator symbols to Python operators
+        3. Transforms mathematical functions using regex
+        4. Evaluates the final expression
+        5. Displays the result or an error message
+        
+        Supported operations:
+        ---------------------
+        - Basic arithmetic: +, -, ×, ÷
+        - Exponents: x^y (converted to x**y)
+        - Square roots: √25 or √(25)
+        - Nth roots: √(n,x) means nth root of x
+        - Trigonometry: sin, cos, tan (input in degrees)
+        - Inverse trig: asin, acos, atan (output in degrees)
+        - Logarithm: log(x) base 10
+        
+        Error handling:
+        ---------------
+        If any error occurs during calculation (invalid syntax, 
+        division by zero, domain errors, etc.), the display shows "Error"
+        """
         try:
+            # =====================
+            # Step 1: Get expression from display
+            # =====================
+            
+            # Retrieve the current text from the display screen
+            # This is what the user has typed (e.g., "5×3+√25")
             expr = self.display.get()
-
-            # Replace calculator symbols with Python operators
+            
+            
+            # =====================
+            # Step 2: Replace calculator symbols with Python operators
+            # =====================
+            
+            # Convert multiplication symbol × to Python's *
+            # Convert division symbol ÷ to Python's /
+            # Example: "5×3÷2" becomes "5*3/2"
             expr = expr.replace("×", "*").replace("÷", "/")
-
-            # ======== ADDED (Power handling) ========
-            # Convert power symbol ^ into Python exponent operator **
+            
+            
+            # =====================
+            # Step 3: Handle exponentiation (power)
+            # =====================
+            
+            # Convert power symbol ^ into Python's exponent operator **
+            # Example: "2^3" becomes "2**3" which evaluates to 8
             expr = expr.replace("^", "**")
-            # =======================================
-
-            # Handle general root format √(n,x):
-                # Regex breakdown for general root format √(n, x):
-    #  √\(      : matches the '√' symbol followed by an opening parenthesis
-    #  \s*      :matches any optional whitespace before or after
-    # ([^,]+)   : captures the first number (n) before the comma
-    # \s*,\s*   : matches the comma separating the numbers, allowing spaces around it
-    # ([^)]+)   :captures the second number (x) after the comma
-    #  \s*\)    :matches any optional whitespace before the closing parenthesis
-
+            
+            
+            # =====================
+            # Step 4: Handle general nth root format √(n,x)
+            # =====================
+            
+            # Regex pattern breakdown for general root format √(n, x):
+            # √\(        : matches the '√' symbol followed by an opening parenthesis
+            # \s*        : matches any optional whitespace (spaces/tabs)
+            # ([^,]+)    : captures the first number (n = root degree) before the comma
+            #              [^,]+ means "one or more characters that are NOT a comma"
+            # \s*,\s*    : matches the comma separating the numbers, with optional spaces
+            # ([^)]+)    : captures the second number (x = number to take root of)
+            #              [^)]+ means "one or more characters that are NOT a closing parenthesis"
+            # \s*\)      : matches any optional whitespace before the closing parenthesis
+            #
+            # Replacement: (\2 ** (1/\1))
+            # Mathematical formula: nth root of x = x^(1/n)
+            # \2 refers to the second captured group (x)
+            # \1 refers to the first captured group (n)
+            #
+            # Example:
+            # √(3,27) → (27 ** (1/3)) → 3.0 (cube root of 27)
+            # √(2,16) → (16 ** (1/2)) → 4.0 (square root of 16)
+            
             expr = re.sub(
                 r'√\(\s*([^,]+)\s*,\s*([^)]+)\s*\)',
                 r'(\2 ** (1/\1))',
                 expr
             )
-
-            # Handle square root format √25:
-                # Regex breakdown for square root format √number:
-    #  √\(?       : matches the '√' symbol, optionally followed by an opening parenthesis
-    #  ([0-9.]+)  : captures the number itself (can include decimal points)
-    #  \)?        : optionally matches a closing parenthesis after the number
-    # This allows the user to write both √25 and √(25), and both will be
-    # correctly converted to math.sqrt(25) for evaluation in Python
+            
+            
+            # =====================
+            # Step 5: Handle square root format √25 or √(25)
+            # =====================
+            
+            # Regex pattern breakdown for square root format √number:
+            # √\(?       : matches the '√' symbol, optionally followed by opening parenthesis
+            #              \(? means "zero or one opening parenthesis"
+            # ([0-9.]+)  : captures the number itself
+            #              [0-9.]+ means "one or more digits or decimal points"
+            #              This allows both integers (25) and decimals (25.5)
+            # \)?        : optionally matches a closing parenthesis after the number
+            #
+            # Replacement: math.sqrt(\1)
+            # Converts to Python's square root function
+            # \1 refers to the captured number
+            #
+            # This pattern allows flexible input:
+            # √25   → math.sqrt(25)   → 5.0
+            # √(25) → math.sqrt(25)   → 5.0
+            # √9.5  → math.sqrt(9.5)  → 3.082...
+            
             expr = re.sub(
                 r'√\(?([0-9.]+)\)?',
                 r'math.sqrt(\1)',
                 expr
             )
-
-            # Trigonometric functions (input in degrees)
+            
+            
+            # =====================
+            # Step 6: Handle trigonometric functions (input in degrees)
+            # =====================
+            
+            # Python's math.sin, math.cos, math.tan work with radians
+            # But calculators typically use degrees for user convenience
+            # So we convert: degrees → radians → calculate → result
+            
+            # Sine function: sin(angle_in_degrees)
+            # Pattern: sin\(([^)]+)\) captures everything inside sin(...)
+            # Replacement: math.sin(math.radians(\1))
+            # Example: sin(30) → math.sin(math.radians(30)) → 0.5
             expr = re.sub(r'sin\(([^)]+)\)', r'math.sin(math.radians(\1))', expr)
+            
+            # Cosine function: cos(angle_in_degrees)
+            # Example: cos(60) → math.cos(math.radians(60)) → 0.5
             expr = re.sub(r'cos\(([^)]+)\)', r'math.cos(math.radians(\1))', expr)
+            
+            # Tangent function: tan(angle_in_degrees)
+            # Example: tan(45) → math.tan(math.radians(45)) → 1.0
             expr = re.sub(r'tan\(([^)]+)\)', r'math.tan(math.radians(\1))', expr)
-
-            # Inverse trigonometric functions (output in degrees)
+            
+            
+            # =====================
+            # Step 7: Handle inverse trigonometric functions (output in degrees)
+            # =====================
+            
+            # Python's math.asin, math.acos, math.atan return radians
+            # But we want to display the result in degrees
+            # So we convert: calculate in radians → convert to degrees → result
+            
+            # Inverse sine (arcsin): asin(value) returns angle in degrees
+            # Pattern: asin\(([^)]+)\) captures the value inside asin(...)
+            # Replacement: math.degrees(math.asin(\1))
+            # Example: asin(0.5) → math.degrees(math.asin(0.5)) → 30.0 degrees
             expr = re.sub(r'asin\(([^)]+)\)', r'math.degrees(math.asin(\1))', expr)
+            
+            # Inverse cosine (arccos): acos(value) returns angle in degrees
+            # Example: acos(0.5) → math.degrees(math.acos(0.5)) → 60.0 degrees
             expr = re.sub(r'acos\(([^)]+)\)', r'math.degrees(math.acos(\1))', expr)
+            
+            # Inverse tangent (arctan): atan(value) returns angle in degrees
+            # Example: atan(1) → math.degrees(math.atan(1)) → 45.0 degrees
             expr = re.sub(r'atan\(([^)]+)\)', r'math.degrees(math.atan(\1))', expr)
-
-            # Logarithmic function (base 10)
-            # Regex breakdown for logarithm function log(x):
-    # log\(       : matches the 'log(' literal in the input
-    # ([^)]+)    : captures everything inside the parentheses (the argument x)
-    # \)          : matches the closing parenthesis
-    #
-    # Replacement: math.log10(\1)
-    # Converts the user input log(x) into Python's math.log10(x),
-    #   which calculates the logarithm base 10.
-    #
-    # Example:
-    # log(100) :math.log10(100) → 2: 
+            
+            
+            # =====================
+            # Step 8: Handle logarithm function (base 10)
+            # =====================
+            
+            # Regex pattern breakdown for logarithm function log(x):
+            # log\(      : matches the literal text 'log('
+            # ([^)]+)    : captures everything inside the parentheses (the argument x)
+            #              [^)]+ means "one or more characters that are NOT a closing parenthesis"
+            # \)         : matches the closing parenthesis
+            #
+            # Replacement: math.log10(\1)
+            # Converts the user input log(x) into Python's math.log10(x)
+            # This calculates the logarithm base 10
+            #
+            # Mathematical note: log₁₀(x) answers "10 to what power equals x?"
+            #
+            # Examples:
+            # log(100)  → math.log10(100)  → 2.0   (because 10² = 100)
+            # log(1000) → math.log10(1000) → 3.0   (because 10³ = 1000)
+            # log(10)   → math.log10(10)   → 1.0   (because 10¹ = 10)
             
             expr = re.sub(r'log\(([^)]+)\)', r'math.log10(\1)', expr)
-
-            # Evaluate the final expression
+            
+            
+            # =====================
+            # Step 9: Evaluate the final expression
+            # =====================
+            
+            # At this point, all calculator symbols and functions have been
+            # converted to valid Python code. Now we can safely evaluate it.
+            # 
+            # Example transformation:
+            # User input:  "sin(30)+√25×2"
+            # After step 2-8: "math.sin(math.radians(30))+math.sqrt(25)*2"
+            # Evaluation: 0.5 + 5.0 * 2 = 10.5
+            
             result = eval(expr)
-
-            # Save the result for the Ans button
+            
+            
+            # =====================
+            # Step 10: Save the result for the Ans button
+            # =====================
+            
+            # Store the result as a string in last_answer
+            # This allows the user to recall this result later using the "Ans" button
+            # Example: If user calculates "5+3" = 8, then "Ans×2" = 16
             self.last_answer = str(result)
-
-            # Display the result
+            
+            
+            # =====================
+            # Step 11: Display the result on screen
+            # =====================
+            
+            # Clear the current display (remove the expression)
             self.display.delete(0, tk.END)
+            
+            # Insert the calculated result
+            # The result appears in the same place where the expression was
             self.display.insert(0, result)
-
+        
+        
         except:
-            # Display error message if calculation fails
+            # =====================
+            # Error handling
+            # =====================
+            
+            # If ANY error occurs during the calculation process, we catch it here
+            # Possible errors include:
+            # - SyntaxError: Invalid mathematical expression (e.g., "5++3")
+            # - ZeroDivisionError: Division by zero (e.g., "5÷0")
+            # - ValueError: Invalid domain for functions (e.g., "√(-1)" or "log(-5)")
+            # - NameError: Undefined variable or function
+            # - TypeError: Wrong type of argument
+            
+            # Clear the display
             self.display.delete(0, tk.END)
+            
+            # Show generic "Error" message to the user
+            # We use a generic message rather than showing technical error details
+            # to keep the interface simple and user-friendly
             self.display.insert(0, "Error")
-
+    
+    
+    # =====================
+    # Insert previous answer method
+    # =====================
+    
     def insert_ans(self):
+        """
+        Insert the last calculated answer into the current expression
+        
+        This method is called when the user presses the "Ans" button.
+        It retrieves the last calculation result and inserts it at the
+        current cursor position in the display.
+        
+        Use case:
+        ---------
+        User calculates: 5 + 3 = 8
+        Then types: 2 ×
+        Then presses: Ans
+        Display shows: 2 × 8
+        
+        If no previous calculation exists:
+        -----------------------------------
+        last_answer is an empty string "", so nothing is inserted
+        This prevents errors when Ans is pressed before any calculation
+        """
+        # Insert the last answer at the end of the current expression
+        # tk.END means "insert at the end of whatever is currently displayed"
+        # If last_answer is empty, nothing visible happens (empty string inserted)
         self.display.insert(tk.END, self.last_answer)
-        
-        
-        
-        
-        
-    def evaluate_expression(self, expr):
-        expr = expr.replace("×", "*").replace("÷", "/")
-        expr = expr.replace("^", "**")
-
-        expr = re.sub(
-        r'√\(\s*([^,]+)\s*,\s*([^)]+)\s*\)',
-        r'(\2 ** (1/\1))',
-        expr
-    )
-
-        expr = re.sub(
-        r'√\(?([0-9.]+)\)?',
-        r'math.sqrt(\1)',
-        expr
-    )
-
-        expr = re.sub(r'sin\(([^)]+)\)', r'math.sin(math.radians(\1))', expr)
-        expr = re.sub(r'cos\(([^)]+)\)', r'math.cos(math.radians(\1))', expr)
-        expr = re.sub(r'tan\(([^)]+)\)', r'math.tan(math.radians(\1))', expr)
-
-        expr = re.sub(r'asin\(([^)]+)\)', r'math.degrees(math.asin(\1))', expr)
-        expr = re.sub(r'acos\(([^)]+)\)', r'math.degrees(math.acos(\1))', expr)
-        expr = re.sub(r'atan\(([^)]+)\)', r'math.degrees(math.atan(\1))', expr)
-    
-        expr = re.sub(r'log\(([^)]+)\)', r'math.log10(\1)', expr)
-
-        return eval(expr)
-
-        
-
-
-# =====================
-# Input handling functions
-# =====================
-
-# Inserts the pressed button value into the display screen
-def press(value):
-    display.insert(tk.END, value)
-
-# Clears the entire display screen and reset last answer(AC button) :
-def clear_all():
-    display.delete(0, tk.END)
-    engine.last_answer= ""
-    
-    
-# Clears the last entry (number or function) (C button): 
-def clear_entry():
-    text = display.get()
-    
-    # Remove last function if exists (sin( , cos( , etc.)
-    for func in ["asin(", "acos(", "atan(", "sin(", "cos(", "tan(", "log("]:
-        if text.endswith(func):
-            display.delete(len(text)-len(func), tk.END)
-            return
-    
-    # Otherwise remove last character
-    display.delete(len(text)-1, tk.END)
-
-# Deletes the last entered character from the display
-def delete_last():
-    text = display.get()
-    display.delete(0, tk.END)
-    display.insert(0, text[:-1])
-
-# Inserts the value of pi (π) into the display
-def insert_pi():
-    display.insert(tk.END, str(math.pi))
-
-# ======== ADDED (Power function) ========
-# Inserts the power symbol (^) into the display for exponent calculations
-def power():
-    display.insert(tk.END, "^")
-# =======================================
-
 
 
 # =====================
